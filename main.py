@@ -141,148 +141,148 @@ if __name__ == '__main__':
     VG.layout('dot')
     VG.draw(f'{path_output}.png')
 
-    # Building the lab topology
-    for node_entry in DG.nodes.data():
-        if node_entry[1]['dev_type'] != 'port':
-            templating_data = {}
-            templating_data['hostname'] = node_entry[0]
-            templating_data['general'] = node_entry[1]
+    # # Building the lab topology
+    # for node_entry in DG.nodes.data():
+    #     if node_entry[1]['dev_type'] != 'port':
+    #         templating_data = {}
+    #         templating_data['hostname'] = node_entry[0]
+    #         templating_data['general'] = node_entry[1]
 
 
-            # Creating list of the interfaces
-            templating_data['interfaces'] = []
-            for port_entry in DG.adj[node_entry[0]]:
-                port_dict = DG.nodes[port_entry]
+    #         # Creating list of the interfaces
+    #         templating_data['interfaces'] = []
+    #         for port_entry in DG.adj[node_entry[0]]:
+    #             port_dict = DG.nodes[port_entry]
 
-                if node_entry[1]['dev_type'] == 'microsoft-sonic':
-                    port_id = 10 + int(re.sub(f'{primitives[node_entry[1]["dev_type"]]["iface"]["name"]}','', port_dict['label'].split('\n')[0]))
-                    port_dict['vlan'] = port_id
+    #             if node_entry[1]['dev_type'] == 'microsoft-sonic':
+    #                 port_id = 10 + int(re.sub(f'{primitives[node_entry[1]["dev_type"]]["iface"]["name"]}','', port_dict['label'].split('\n')[0]))
+    #                 port_dict['vlan'] = port_id
 
-                for connected_item in DG.adj[port_entry]:
-                    for abc in DG.adj[connected_item].items():
-                        if abc[1]['phy'] == 'wire':
-                            if abc[1]['role'] == 'customer':
-                                port_dict['customer'] = True
+    #             for connected_item in DG.adj[port_entry]:
+    #                 for abc in DG.adj[connected_item].items():
+    #                     if abc[1]['phy'] == 'wire':
+    #                         if abc[1]['role'] == 'customer':
+    #                             port_dict['customer'] = True
 
-                            elif abc[1]['role'] == 'dc':
-                                port_dict['customer'] = False
+    #                         elif abc[1]['role'] == 'dc':
+    #                             port_dict['customer'] = False
 
-                                for nested_abc in DG.adj[abc[0]].items():
-                                    if nested_abc[1]['phy'] == 'wire':
-                                        port_dict['bgp_peer'] = DG.nodes[nested_abc[0]]['ipv4'].split('/')[0]
+    #                             for nested_abc in DG.adj[abc[0]].items():
+    #                                 if nested_abc[1]['phy'] == 'wire':
+    #                                     port_dict['bgp_peer'] = DG.nodes[nested_abc[0]]['ipv4'].split('/')[0]
 
-                                        for nested_nested_abc in DG.adj[nested_abc[0]].items():
-                                            if nested_nested_abc[1]['phy'] == 'port':
-                                                port_dict['bgp_asn'] = DG.nodes[nested_nested_abc[0]]['bgp_asn']
+    #                                     for nested_nested_abc in DG.adj[nested_abc[0]].items():
+    #                                         if nested_nested_abc[1]['phy'] == 'port':
+    #                                             port_dict['bgp_asn'] = DG.nodes[nested_nested_abc[0]]['bgp_asn']
 
-                templating_data['interfaces'].append(port_dict)
+    #             templating_data['interfaces'].append(port_dict)
 
-            # Templating the configuration files
-            if not os.path.exists(f'{path_infra}/{node_entry[0]}'):
-                os.makedirs(f'{path_infra}/{node_entry[0]}')
+    #         # Templating the configuration files
+    #         if not os.path.exists(f'{path_infra}/{node_entry[0]}'):
+    #             os.makedirs(f'{path_infra}/{node_entry[0]}')
 
-            if primitives[node_entry[1]['dev_type']]['templates']:
-                for temp_entry in primitives[node_entry[1]['dev_type']]['templates']:
-                    if not os.path.exists(f'{path_infra}/{node_entry[0]}/{temp_entry["destination"]}'):
-                        os.makedirs(f'{path_infra}/{node_entry[0]}/{temp_entry["destination"]}')
+    #         if primitives[node_entry[1]['dev_type']]['templates']:
+    #             for temp_entry in primitives[node_entry[1]['dev_type']]['templates']:
+    #                 if not os.path.exists(f'{path_infra}/{node_entry[0]}/{temp_entry["destination"]}'):
+    #                     os.makedirs(f'{path_infra}/{node_entry[0]}/{temp_entry["destination"]}')
 
-                    if temp_entry['type'] == 'static':
-                        os.popen(f'cp primitives/templates/{node_entry[1]["dev_type"]}/{temp_entry["source"]} {path_infra}/{node_entry[0]}/{temp_entry["destination"]}/{temp_entry["source"]}')
+    #                 if temp_entry['type'] == 'static':
+    #                     os.popen(f'cp primitives/templates/{node_entry[1]["dev_type"]}/{temp_entry["source"]} {path_infra}/{node_entry[0]}/{temp_entry["destination"]}/{temp_entry["source"]}')
 
-                    elif temp_entry['type'] == 'dynamic':
-                        with open(f'{path_primitives}/templates/{node_entry[1]["dev_type"]}/{temp_entry["source"]}', 'r') as template_file:
-                            template = jinja2.Template(template_file.read())
+    #                 elif temp_entry['type'] == 'dynamic':
+    #                     with open(f'{path_primitives}/templates/{node_entry[1]["dev_type"]}/{temp_entry["source"]}', 'r') as template_file:
+    #                         template = jinja2.Template(template_file.read())
 
-                        with open(f'{path_infra}/{node_entry[0]}/{temp_entry["destination"]}/{re.sub(".j2", "", temp_entry["source"])}', 'w') as target_config:
-                            target_config.write(template.render(temp_data=templating_data))
+    #                     with open(f'{path_infra}/{node_entry[0]}/{temp_entry["destination"]}/{re.sub(".j2", "", temp_entry["source"])}', 'w') as target_config:
+    #                         target_config.write(template.render(temp_data=templating_data))
 
-    # Launching the emulated network
-    print('Launching the network emulation.')
-    docker_client = docker.from_env()
-    temp_current_path = os.getcwd()
+    # # Launching the emulated network
+    # print('Launching the network emulation.')
+    # docker_client = docker.from_env()
+    # temp_current_path = os.getcwd()
 
-    for node_entry in DG.nodes.data():
-        if 'dev_role' in node_entry[1]:
-            if primitives[node_entry[1]['dev_type']]['image']['type'] == 'docker':
-                print(f'Creating the Docker container with {node_entry[0]}...')
+    # for node_entry in DG.nodes.data():
+    #     if 'dev_role' in node_entry[1]:
+    #         if primitives[node_entry[1]['dev_type']]['image']['type'] == 'docker':
+    #             print(f'Creating the Docker container with {node_entry[0]}...')
 
-                if node_entry[1]['dev_role'] != 'host':
-                    container_node = docker_client.containers.run(image=primitives[node_entry[1]['dev_type']]['image']['name'],
-                                                                  detach=True,
-                                                                  privileged=True,
-                                                                  tty=True,
-                                                                  stdin_open=True,
-                                                                  network_mode='none',
-                                                                  name=node_entry[0],
-                                                                  entrypoint='/bin/bash',
-                                                                  volumes={f'{temp_current_path}/{path_infra}/{node_entry[0]}': {'bind': '/sonic', 'mode': 'rw'}})
+    #             if node_entry[1]['dev_role'] != 'host':
+    #                 container_node = docker_client.containers.run(image=primitives[node_entry[1]['dev_type']]['image']['name'],
+    #                                                               detach=True,
+    #                                                               privileged=True,
+    #                                                               tty=True,
+    #                                                               stdin_open=True,
+    #                                                               network_mode='none',
+    #                                                               name=node_entry[0],
+    #                                                               entrypoint='/bin/bash',
+    #                                                               volumes={f'{temp_current_path}/{path_infra}/{node_entry[0]}': {'bind': '/sonic', 'mode': 'rw'}})
 
-                else:
-                    container_node = docker_client.containers.run(image=primitives[node_entry[1]['dev_type']]['image']['name'],
-                                                                  detach=True,
-                                                                  privileged=True,
-                                                                  tty=True,
-                                                                  stdin_open=True,
-                                                                  network_mode='none',
-                                                                  name=node_entry[0],
-                                                                  entrypoint='/bin/bash')
+    #             else:
+    #                 container_node = docker_client.containers.run(image=primitives[node_entry[1]['dev_type']]['image']['name'],
+    #                                                               detach=True,
+    #                                                               privileged=True,
+    #                                                               tty=True,
+    #                                                               stdin_open=True,
+    #                                                               network_mode='none',
+    #                                                               name=node_entry[0],
+    #                                                               entrypoint='/bin/bash')
 
-                docker_llapi = docker.APIClient(base_url='unix://var/run/docker.sock')
-                node_entry[1]['pid'] = docker_llapi.inspect_container(node_entry[0])['State']['Pid']
+    #             docker_llapi = docker.APIClient(base_url='unix://var/run/docker.sock')
+    #             node_entry[1]['pid'] = docker_llapi.inspect_container(node_entry[0])['State']['Pid']
 
-    # Connecting containers
-    veth_id = 0
+    # # Connecting containers
+    # veth_id = 0
 
-    for node_entry in DG.nodes.data():
-        if 'dev_role' in node_entry[1]:
-            print(f'Building connections for {node_entry[0]} ...')
-            container_node = docker_client.containers.get(node_entry[0])
-            container_node.exec_run('ip netns add sw_net', detach=True)
+    # for node_entry in DG.nodes.data():
+    #     if 'dev_role' in node_entry[1]:
+    #         print(f'Building connections for {node_entry[0]} ...')
+    #         container_node = docker_client.containers.get(node_entry[0])
+    #         container_node.exec_run('ip netns add sw_net', detach=True)
 
-            for iface_id in DG.adj[node_entry[0]]:
-                for link_data in DG.adj[iface_id].items():
-                    if link_data[1]['phy'] != 'port':
-                        os.system(f'sudo brctl addbr {link_data[1]["linux_bridge"]}')
-                        os.system(f'sudo ip link set {link_data[1]["linux_bridge"]} up')
+    #         for iface_id in DG.adj[node_entry[0]]:
+    #             for link_data in DG.adj[iface_id].items():
+    #                 if link_data[1]['phy'] != 'port':
+    #                     os.system(f'sudo brctl addbr {link_data[1]["linux_bridge"]}')
+    #                     os.system(f'sudo ip link set {link_data[1]["linux_bridge"]} up')
 
-                        if node_entry[1]['dev_type'] == 'microsoft-sonic':
-                            os.system(f'sudo ip link add sw_port{DG.nodes[iface_id]["vlan"] - 10} type veth')
+    #                     if node_entry[1]['dev_type'] == 'microsoft-sonic':
+    #                         os.system(f'sudo ip link add sw_port{DG.nodes[iface_id]["vlan"] - 10} type veth')
 
-                        else:
-                            os.system(f'sudo ip link add {DG.nodes[iface_id]["dev_name"]} type veth')
+    #                     else:
+    #                         os.system(f'sudo ip link add {DG.nodes[iface_id]["dev_name"]} type veth')
 
-                        os.system(f'sudo ip link set veth{veth_id} up')
-                        os.system(f'sudo brctl addif {link_data[1]["linux_bridge"]} veth{veth_id}')
+    #                     os.system(f'sudo ip link set veth{veth_id} up')
+    #                     os.system(f'sudo brctl addif {link_data[1]["linux_bridge"]} veth{veth_id}')
 
-                        if node_entry[1]['dev_type'] == 'microsoft-sonic':
-                            os.system(f'sudo ip link set netns {DG.nodes[node_entry[0]]["pid"]} dev sw_port{DG.nodes[iface_id]["vlan"] - 10}')
+    #                     if node_entry[1]['dev_type'] == 'microsoft-sonic':
+    #                         os.system(f'sudo ip link set netns {DG.nodes[node_entry[0]]["pid"]} dev sw_port{DG.nodes[iface_id]["vlan"] - 10}')
 
-                        else:
-                            os.system(f'sudo ip link set netns {DG.nodes[node_entry[0]]["pid"]} dev {DG.nodes[iface_id]["dev_name"]}')
+    #                     else:
+    #                         os.system(f'sudo ip link set netns {DG.nodes[node_entry[0]]["pid"]} dev {DG.nodes[iface_id]["dev_name"]}')
 
-                        if node_entry[1]['dev_type'] == 'microsoft-sonic':
-                            container_node.exec_run(f'ip link set dev sw_port{DG.nodes[iface_id]["vlan"] - 10} netns sw_net', detach=True)
-                            container_node.exec_run(f'ip netns exec sw_net sysctl net.ipv6.conf.sw_port{DG.nodes[iface_id]["vlan"] - 10}.disable_ipv6=1', detach=True)
-                            container_node.exec_run(f'ip netns exec sw_net ip link set sw_port{DG.nodes[iface_id]["vlan"] - 10} up', detach=True)
+    #                     if node_entry[1]['dev_type'] == 'microsoft-sonic':
+    #                         container_node.exec_run(f'ip link set dev sw_port{DG.nodes[iface_id]["vlan"] - 10} netns sw_net', detach=True)
+    #                         container_node.exec_run(f'ip netns exec sw_net sysctl net.ipv6.conf.sw_port{DG.nodes[iface_id]["vlan"] - 10}.disable_ipv6=1', detach=True)
+    #                         container_node.exec_run(f'ip netns exec sw_net ip link set sw_port{DG.nodes[iface_id]["vlan"] - 10} up', detach=True)
 
-                        elif node_entry[1]['dev_type'] == 'ubuntu' and node_entry[1]['dev_role'] == 'hosts':
-                            container_node.exec_run(f'sysctl net.ipv6.conf.{DG.nodes[iface_id]["dev_name"]}.disable_ipv6=1', detach=True)
-                            container_node.exec_run(f'ifconfig {DG.nodes[iface_id]["dev_name"]} {DG.nodes[iface_id]["ipv4"]} mtu 1400', detach=True)
-                            container_node.exec_run(f'ip route replace default via {DG.nodes[link_data[0]]["ipv4"].split("/")[0]}', detach=True)
+    #                     elif node_entry[1]['dev_type'] == 'ubuntu' and node_entry[1]['dev_role'] == 'hosts':
+    #                         container_node.exec_run(f'sysctl net.ipv6.conf.{DG.nodes[iface_id]["dev_name"]}.disable_ipv6=1', detach=True)
+    #                         container_node.exec_run(f'ifconfig {DG.nodes[iface_id]["dev_name"]} {DG.nodes[iface_id]["ipv4"]} mtu 1400', detach=True)
+    #                         container_node.exec_run(f'ip route replace default via {DG.nodes[link_data[0]]["ipv4"].split("/")[0]}', detach=True)
 
-                        veth_id += 1
+    #                     veth_id += 1
 
-            if node_entry[1]['dev_type'] == 'microsoft-sonic':
-                container_node.exec_run('sh /sonic/scripts/startup.sh', detach=True)
-                print('sh /sonic/scripts/startup.sh')
+    #         if node_entry[1]['dev_type'] == 'microsoft-sonic':
+    #             container_node.exec_run('sh /sonic/scripts/startup.sh', detach=True)
+    #             print('sh /sonic/scripts/startup.sh')
 
-    # Modifuing FW rules
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["loop"]} -d {resources["ip"]["loop"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["loop"]} -d {resources["ip"]["customer"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["loop"]} -d {resources["ip"]["dc"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["dc"]} -d {resources["ip"]["dc"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["dc"]} -d {resources["ip"]["loop"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["dc"]} -d {resources["ip"]["customer"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["customer"]} -d {resources["ip"]["customer"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["customer"]} -d {resources["ip"]["loop"]} -j ACCEPT')
-    os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["customer"]} -d {resources["ip"]["dc"]} -j ACCEPT')
+    # # Modifuing FW rules
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["loop"]} -d {resources["ip"]["loop"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["loop"]} -d {resources["ip"]["customer"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["loop"]} -d {resources["ip"]["dc"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["dc"]} -d {resources["ip"]["dc"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["dc"]} -d {resources["ip"]["loop"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["dc"]} -d {resources["ip"]["customer"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["customer"]} -d {resources["ip"]["customer"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["customer"]} -d {resources["ip"]["loop"]} -j ACCEPT')
+    # os.system(f'sudo iptables -I FORWARD 1 -s {resources["ip"]["customer"]} -d {resources["ip"]["dc"]} -j ACCEPT')
